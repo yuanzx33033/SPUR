@@ -67,8 +67,6 @@ class ConstrainedFFNNModel(nn.Module):
 		self.hierarchy_size = np.cumsum(hierarchy_size).tolist()
 		self.output_dim = output_dim
 
-		# self.fc_g = nn.Linear(hidden_dim, hidden_dim)
-
 		fc = []
 		for i in range(self.nb_layers):
 			if i == 0:
@@ -88,16 +86,6 @@ class ConstrainedFFNNModel(nn.Module):
 			self.f = nn.Tanh()
 		else:
 			self.f = nn.ReLU()
-			# self.f = nn.ELU()
-		# self.gnn = TwoLayerChebNet_ours(
-		# 	input_size=hidden_dim,
-		# 	hidden_size=hidden_dim,
-		# 	output_size=output_dim,
-		# 	device=device,
-		# 	dropout=hyperparams['dropout']
-		# )
-
-		# self.gnn = gnn
 
 		self.device = device
 
@@ -106,28 +94,18 @@ class ConstrainedFFNNModel(nn.Module):
 	# self.fc_last = nn.Linear(output_dim*2,output_dim)
 
 	def forward(self, x, node_feats, adjacency_matrix=None):
-		# node_idx = torch.tensor(list(range(self.output_dim))).long().to(self.device)
 		for i in range(self.nb_layers):
 			if i == self.nb_layers - 1:
 
 				x = self.fc[i](x)
 				x = self.sigmoid(x)
 
-				# match_res = node_feats.repeat(self.output_dim, 1).T
-				# x = self.f(torch.matmul(x, match_res)) # + self.fc[i](x)
-				# x = self.sigmoid(x)
 			elif i == 0:
 				node_feats = node_feats.repeat(x.size(0), 1)
-				# self.node_feats = self.f(self.fc_g(node_feats))
 				x = self.f(self.fc[i](x))
 				x = torch.cat([x, node_feats], dim=1)
 
 				x = self.drop(x)
-
-				# x = x * node_feats
-				# if x.size(0) != 1:
-				# 	x = self.batch_norm(x)
-				# x = x + match_res
 
 			else:
 				x = self.f(self.fc[i](x))
@@ -138,13 +116,6 @@ class ConstrainedFFNNModel(nn.Module):
 			# masking different levels of output given hierarchy h_i
 			for h_i in range(len(self.hierarchy_size)):
 				mask = torch.zeros_like(x)
-				# print(x.size())
-				# if h_i == 0:
-				#     mask[:, :self.hierarchy_size[h_i]] = 1
-				# elif h_i == len(self.hierarchy_size) - 1:
-				#     mask[:, -self.hierarchy_size[h_i]:] = 1
-				# else:
-				#     mask[:, self.hierarchy_size[h_i]: self.hierarchy_size[h_i]+self.hierarchy_size[h_i+1]] = 1
 				mask[:, :self.hierarchy_size[h_i]] = 1
 				masks.append(mask)
 			return x, None, masks
@@ -164,14 +135,6 @@ def main():
 						help='random seed (default: 0)')
 	parser.add_argument('--device', type=str, default='0',
 						help='GPU (default:0)')
-	# parser.add_argument('--num_gnn_layers', type=int, default=1,
-	# 					help='number of layers INCLUDING the input one (default: 5)')
-	# parser.add_argument('--num_mlp_layers', type=int, default=1,
-	# 					help='number of layers for MLP EXCLUDING the input one (default: 2). 1 means linear model.')
-	# parser.add_argument('--graph_pooling_type', type=str, default="average", choices=["sum", "average"],
-	# 					help='Pooling for over nodes in a graph: sum or average')
-	# parser.add_argument('--neighbor_pooling_type', type=str, default="average", choices=["sum", "average", "max"],
-	# 					help='Pooling for over neighboring nodes: sum, average or max')
 	args = parser.parse_args()
 
 	assert ('_' in args.dataset)
@@ -271,7 +234,7 @@ def main():
 	epochss = {'FUN': epochss_FUN, 'GO': epochss_GO, 'others': epochss_others}
 
 
-	epochss_FUN_g = {'cellcycle': 1000, 'derisi': 200, 'eisen': 200, 'expr': 100, 'gasch1': 300, 'gasch2': 300, 'seq': 1000,
+	epochss_FUN_g = {'cellcycle': 1000, 'derisi': 200, 'eisen': 200, 'expr': 100, 'gasch1': 300, 'gasch2': 300, 'seq': 300,
 				   'spo': 1000}
 	epochss_GO_g = {'cellcycle': 1000, 'derisi': 200, 'eisen': 200, 'expr': 200, 'gasch1': 300, 'gasch2': 300, 'seq': 300,
 				  'spo': 300}
@@ -340,8 +303,6 @@ def main():
 	torch.backends.cudnn.benchmark = False
 
 	device = torch.device("cuda:" + str(args.device) if torch.cuda.is_available() else "cpu")
-	if torch.cuda.is_available:
-		pin_memory = True
 
 	# Load the datasets
 	if ('others' in args.dataset):
@@ -352,14 +313,6 @@ def main():
 		train, val, test = initialize_dataset(dataset_name, datasets)
 		train.to_eval, val.to_eval, test.to_eval = torch.tensor(train.to_eval, dtype=torch.bool), torch.tensor(
 			val.to_eval, dtype=torch.bool), torch.tensor(test.to_eval, dtype=torch.bool)
-
-	different_from_0 = torch.tensor(np.array((test.Y.sum(0) != 0), dtype=np.uint8), dtype=torch.bool)
-
-	# Compute matrix of ancestors R
-	# Given n classes, R is an (n x n) matrix where R_ij = 1 if class i is ancestor of class j
-
-	def is_pos_def(x):
-		return np.all(np.linalg.eigvals(x) >= 0)
 
 
 
@@ -397,23 +350,6 @@ def main():
 	test_g = test.g_list
 
 	print(len(train.terms))
-
-	# Create loaders
-	# if ontology != "others":
-	# 	train_X, train_y, test_X, test_y = torch.cat([train.X, val.X], dim=0).detach().cpu().numpy(), \
-	# 									   torch.cat([train.Y, val.Y], dim=0).detach().cpu().numpy(), \
-	# 									   test.X.detach().cpu().numpy(), \
-	# 									   test.Y.detach().cpu().numpy()
-	# else:
-	# 	train_X, train_y, test_X, test_y = train.X.detach().cpu().numpy(), \
-	# 									   train.Y.detach().cpu().numpy(), \
-	# 									   test.X.detach().cpu().numpy(), \
-	# 									   test.Y.detach().cpu().numpy()
-	#
-	# pickle.dump(train_X, open('train_X.data', 'wb'))
-	# pickle.dump(train_y, open('train_y.data', 'wb'))
-	# pickle.dump(test_X, open('test_X.data', 'wb'))
-	# pickle.dump(test_y, open('test_y.data', 'wb'))
 
 	train_dataset = [(x, y) for (x, y) in zip(train.X, train.Y)]
 
@@ -518,6 +454,7 @@ def main():
 
 	train_losses = []
 	total_time = 0.0
+	print('Training size: {0}, Test size: {1}'.format(len(train_loader), len(test_loader)))
 
 	for epoch in range(num_epochs):
 		model.train()
@@ -532,8 +469,8 @@ def main():
 
 		node_feats, g_feat = gnn(node_idx, train_g[:1])
 		g_feat = g_feat.detach()
-		running_time = 0.0
-		print('Training size: {0}, Test size: {1}'.format(len(train_loader), len(test_loader)))
+
+
 		for i, (x, labels) in enumerate(train_loader):
 			a = time.time()
 			x = x.to(device)
@@ -580,7 +517,7 @@ def main():
 			optimizer.step()
 
 			b = time.time()
-			running_time += (b - a) * 1000
+			running_time = (b - a) * 1000
 
 			predicted0 = output.data > 0.5
 			dummy = torch.zeros_like(predicted0)
@@ -598,8 +535,8 @@ def main():
 
 		total_time += running_time
 
-		print('Running time:', running_time / len(train_loader), running_time, len(train_loader))
-		print('Total time:', total_time / 1000 / 60, '\n')
+		print('Avg running time per instance: {0} sec, Number of training instances: {1}'
+			  .format(running_time, len(train_loader)))
 
 		print(sum(corr0) / sum(total))  # , sum(corr1) / sum(total))
 
