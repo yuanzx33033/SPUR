@@ -19,7 +19,7 @@ For example:
 ```
 
 ## Acknowledgement
-Thanks to others for the open-source work used in this project: <a href="https://github.com/EGiunchiglia/C-HMCNN"> C-HMCNN(h) </a> and GIN <a href="https://github.com/weihua916/powerful-gnns"> 
+Thanks to others for the open-source work used in this project: <a href="https://github.com/EGiunchiglia/C-HMCNN"> C-HMCNN(h) </a> and <a href="https://github.com/weihua916/powerful-gnns"> GIN </a>
 
 ## Citation
 If you use this code, please cite our paper
