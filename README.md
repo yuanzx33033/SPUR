@@ -3,7 +3,7 @@ Code and models for the paper: Self-Paced Unified Representation Learning for Hi
 
 
 ## Requirements
-To install the various python dependencies (including tensorflow)
+To install the various python dependencies
 ```
 pip install -r requirements.txt
 ```
