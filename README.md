@@ -18,6 +18,8 @@ For example:
  python main.py --dataset cellcycle_FUN --seed 0 --device 0
 ```
 
+## Acknowledgement
+Thanks to others for the open-source work used in this project: <a href="https://github.com/EGiunchiglia/C-HMCNN"> C-HMCNN(h) </a> and GIN <a href="https://github.com/weihua916/powerful-gnns"> 
 
 ## Citation
 If you use this code, please cite our paper
