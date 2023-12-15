@@ -2,7 +2,11 @@
 Code and models for the paper: Self-Paced Unified Representation Learning for Hierarchical Multi-Label Classification.
 
 <p align="center">
+<<<<<<< HEAD
   <img width="950" height="270.5" src=./spur_framework.png>
+=======
+  <img width="950" height="230.5" src=./spur_framework.png>
+>>>>>>> ee2a43605498c7033470efde118e8406110ceb73
 </p>
 
 ## Requirements
