@@ -1,15 +1,15 @@
 # SPUR
-Code and models for the paper: Self-Paced Unified Representation Learning for Hierarchical Multi-Label Classification
+Code and models for the paper: Self-Paced Unified Representation Learning for Hierarchical Multi-Label Classification.
 
 
 ## Requirements
-To install the various python dependencies
+To install the various Python dependencies
 ```
 pip install -r requirements.txt
 ```
 
 ## Training
-Training SPUR is easy!. To start a particular experiment, just do
+Training SPUR is easy! To start a particular experiment, just do
 ```
 python main.py --dataset <dataset_name> --seed <seed_num> --device <device_num>
 ```
